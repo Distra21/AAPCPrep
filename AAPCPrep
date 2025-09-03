@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AAPC Prep App</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #0b0c0f;
+            color: #e5e7eb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+        .title {
+            font-size: 2rem;
+            color: #e5e7eb;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .card {
+            background-color: #11131a;
+            border-radius: 12px;
+            border: 1px solid #1f2430;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .quiz-selection-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .quiz-type-button, .next-button, .restart-button {
+            padding: 15px 25px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .quiz-type-button {
+            background-color: #2563eb;
+            color: #fff;
+        }
+        .quiz-type-button:hover {
+            background-color: #1e40af;
+        }
+        .score-display {
+            font-size: 1rem;
+            color: #e5e7eb;
+            margin-bottom: 15px;
+            text-align: right;
+        }
+        .question-stem {
+            font-size: 16px;
+            color: #e5e7eb;
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        .option {
+            display: block;
+            width: 100%;
+            text-align: left;
+            border: 1px solid #1f2430;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: transparent;
+            color: #e5e7eb;
+            cursor: pointer;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+        .option:hover {
+            border-color: #2563eb;
+        }
+        .option.selected {
+            border-color: #2563eb;
+            background-color: rgba(37, 99, 235, 0.2);
+        }
+        .next-button {
+            background-color: #2563eb;
+            color: #fff;
+            margin-top: 15px;
+        }
+        .next-button:hover {
+            background-color: #1e40af;
+        }
+        .restart-button {
+            background-color: #f87171;
+            color: #fff;
+            margin-top: 20px;
+        }
+        .restart-button:hover {
+            background-color: #dc2626;
+        }
+        .completion-message {
+            font-size: 1.25rem;
+            color: #4ade80;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .feedback {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: left;
+        }
+        .feedback.correct {
+            background-color: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4ade80;
+            color: #4ade80;
+        }
+        .feedback.incorrect {
+            background-color: rgba(244, 67, 54, 0.2);
+            border: 1px solid #ef4444;
+            color: #ef4444;
+        }
+        .feedback-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const quizData = {
+          cpc: [
+            {
+              stem: "What does code 99213 represent?",
+              options: ["E/M office new, low", "E/M office established, low/moderate", "UA automated", "Chest radiograph"],
+              correctIndex: 1,
+              explanation: "Code 99213 is an Evaluation and Management (E/M) code used for an established patient office or other outpatient visit, with a low to moderate level of medical decision making."
+            },
+            {
+              stem: "Case Study: A 45-year-old male presents with a cough and fever. The physician performs a detailed history, an expanded problem-focused exam, and orders a chest x-ray. What is the correct E/M code?",
+              options: ["99203", "99213", "99214", "99215"],
+              correctIndex: 2,
+              explanation: "Based on the documentation, the visit meets the criteria for a 99214. The detailed history and expanded problem-focused exam are consistent with this code, which also aligns with the ordering of a chest x-ray, a decision of moderate complexity."
+            },
+            {
+              stem: "What is the CPT code for a routine physical exam?",
+              options: ["99201", "99396", "99401", "99214"],
+              correctIndex: 1,
+              explanation: "Code 99396 is the CPT code for a periodic preventive medicine established patient examination, which is a routine physical."
+            },
+            {
+              stem: "Which of the following modifiers is used to indicate a Professional Component?",
+              options: ["-25", "-26", "-59", "-76"],
+              correctIndex: 1,
+              explanation: "Modifier -26 is used to report the professional component of a service, such as a physician's interpretation of a diagnostic test."
+            },
+            {
+              stem: "The CPT manual is divided into how many sections?",
+              options: ["5", "6", "7", "8"],
+              correctIndex: 1,
+              explanation: "The CPT manual is divided into six main sections: Evaluation and Management, Anesthesia, Surgery, Radiology, Pathology and Laboratory, and Medicine."
+            },
+            {
+              stem: "What is the correct ICD-10-CM code for Essential (primary) hypertension?",
+              options: ["I10", "I11", "I12", "I13"],
+              correctIndex: 0,
+              explanation: "I10 is the correct ICD-10-CM code for essential (primary) hypertension."
+            },
+            {
+              stem: "Which of the following is an example of an integumentary system code?",
+              options: ["10060", "29870", "43235", "58150"],
+              correctIndex: 0,
+              explanation: "Code 10060 is for an incision and drainage of a carbuncle or furuncle, which are procedures related to the skin (integumentary system)."
+            },
+            {
+              stem: "Case Study: A patient has a fractured right ankle. The physician performs closed treatment without manipulation. What CPT code is correct?",
+              options: ["27750", "27760", "27780", "27810"],
+              correctIndex: 2,
+              explanation: "Code 27780 is used for closed treatment of a fibula fracture without manipulation."
+            },
+            {
+              stem: "What is the correct way to code for a bilateral procedure?",
+              options: ["Code the procedure twice", "Add modifier -50 to the CPT code", "Add modifier -51 to the CPT code", "Use a specific bilateral code"],
+              correctIndex: 1,
+              explanation: "The correct method for reporting a bilateral procedure is to add the -50 modifier to the CPT code."
+            },
+            {
+              stem: "What is the purpose of a CPT modifier?",
+              options: ["To increase the reimbursement rate", "To change the meaning of a CPT code", "To provide additional information about a service or procedure", "To indicate the payer of the service"],
+              correctIndex: 2,
+              explanation: "CPT modifiers are two-digit codes appended to a CPT code to provide additional information, such as why a service was performed differently than described in the CPT code."
+            }
+          ],
+          cpb: [
+            {
+              stem: "A superbill is also known as a:",
+              options: ["Patient ledger", "Encounter form", "CMS-1500", "Claim form"],
+              correctIndex: 1,
+              explanation: "An encounter form, often called a superbill, is a document used by providers to record services rendered to a patient during a visit for billing purposes."
+            },
+            {
+              stem: "Case Study: A patient's insurance plan has a $50 copay for an office visit. The total charge is $150. How much is the patient's responsibility?",
+              options: ["$50", "$100", "$150", "$0"],
+              correctIndex: 0,
+              explanation: "The patient's responsibility is the copay, which is a fixed amount for a covered service. In this case, the copay is $50, regardless of the total charge."
+            },
+            {
+              stem: "What is the standard claim form used by physicians to bill Medicare and other payers?",
+              options: ["UB-04", "CMS-1450", "CMS-1500", "CMS-1600"],
+              correctIndex: 2,
+              explanation: "The CMS-1500 is the standard paper claim form used by physicians and suppliers to bill Medicare and other private payers."
+            },
+            {
+              stem: "The term used for a patient's financial responsibility for a percentage of the total charges for a medical service is:",
+              options: ["Copay", "Deductible", "Premium", "Coinsurance"],
+              correctIndex: 3,
+              explanation: "Coinsurance is the percentage of the cost of a covered service that the patient is required to pay after their deductible has been met."
+            },
+            {
+              stem: "A claim that has been returned to the provider due to a missing or incorrect piece of information is a:",
+              options: ["Denied claim", "Rejected claim", "Pending claim", "Clean claim"],
+              correctIndex: 1,
+              explanation: "A rejected claim is a claim that was sent back to the provider by the clearinghouse or payer because of an error or missing information. It has not been processed."
+            },
+            {
+              stem: "What is an EOB?",
+              options: ["Estimate of Benefits", "Explanation of Billing", "Explanation of Benefits", "Electronic Order of Benefits"],
+              correctIndex: 2,
+              explanation: "An EOB, or Explanation of Benefits, is a statement sent by a health insurance company to covered individuals explaining what medical services were paid for on their behalf."
+            },
+            {
+              stem: "Which of the following is typically not included in a provider's fee schedule?",
+              options: ["CPT code", "Diagnosis code", "Procedure description", "Allowed amount"],
+              correctIndex: 1,
+              explanation: "A fee schedule lists the codes and their associated prices. Diagnosis codes are specific to the patient's condition and not part of a standard fee schedule."
+            },
+            {
+              stem: "Case Study: A patient has a deductible of $1,000 and has not paid any of it. The total charge for a service is $200. The patient's responsibility is:",
+              options: ["$0", "$100", "$200", "$1,000"],
+              correctIndex: 2,
+              explanation: "Since the patient has not met their deductible, they are responsible for the full $200 charge until the deductible is met."
+            },
+            {
+              stem: "What is the purpose of an NPI number?",
+              options: ["To identify a patient", "To identify a health plan", "To identify a provider", "To identify a medical claim"],
+              correctIndex: 2,
+              explanation: "An NPI (National Provider Identifier) is a unique 10-digit number that is used to identify a healthcare provider."
+            },
+            {
+              stem: "An appeal is most likely to be filed for which type of claim?",
+              options: ["Rejected claim", "Denied claim", "Clean claim", "Pending claim"],
+              correctIndex: 1,
+              explanation: "An appeal is typically filed for a denied claim, as the claim has been processed and denied by the payer. A rejected claim, by contrast, has not been processed yet and should be corrected and resubmitted."
+            }
+          ]
+        };
+
+        const App = () => {
+          const [quizType, setQuizType] = React.useState(null);
+          const [currentQuestionIndex, setCurrentQuestionIndex] = React.useState(0);
+          const [selectedAnswer, setSelectedAnswer] = React.useState(null);
+          const [feedbackMessage, setFeedbackMessage] = React.useState(null);
+          const [score, setScore] = React.useState(0);
+          const [isQuizCompleted, setIsQuizCompleted] = React.useState(false);
+
+          const questions = quizType ? quizData[quizType] : [];
+          const currentQuestion = questions[currentQuestionIndex];
+
+          const handleQuizSelect = (type) => {
+            setQuizType(type);
+            setScore(0);
+            setCurrentQuestionIndex(0);
+            setIsQuizCompleted(false);
+            setSelectedAnswer(null);
+            setFeedbackMessage(null);
+          };
+
+          const handleAnswerClick = (index) => {
+            if (selectedAnswer !== null) return;
+
+            setSelectedAnswer(index);
+            const isCorrect = index === currentQuestion.correctIndex;
+
+            if (isCorrect) {
+              setScore(score + 1);
+              setFeedbackMessage("Correct!");
+            } else {
+              setFeedbackMessage(`Incorrect. The correct answer is: ${currentQuestion.options[currentQuestion.correctIndex]}. Reason: ${currentQuestion.explanation}`);
+            }
+          };
+          
+          const handleNextClick = () => {
+            setSelectedAnswer(null);
+            setFeedbackMessage(null);
+            if (currentQuestionIndex + 1 < questions.length) {
+              setCurrentQuestionIndex(currentQuestionIndex + 1);
+            } else {
+              setIsQuizCompleted(true);
+            }
+          };
+
+          const handleRestart = () => {
+              setQuizType(null);
+          };
+
+          return (
+            <div className="container">
+              <div className="title">AAPC Prep App</div>
+              <div className="card">
+                {quizType === null ? (
+                  <div className="quiz-selection-container">
+                    <button className="quiz-type-button" onClick={() => handleQuizSelect('cpc')}>Start CPC Quiz</button>
+                    <button className="quiz-type-button" onClick={() => handleQuizSelect('cpb')}>Start CPB Quiz</button>
+                  </div>
+                ) : isQuizCompleted ? (
+                  <>
+                    <div className="completion-message">You have completed the {quizType.toUpperCase()} quiz!</div>
+                    <div className="score-display" style={{textAlign: "center", fontSize: "1.5rem"}}>
+                      Your final score: {score} / {questions.length}
+                    </div>
+                    <button className="restart-button" onClick={handleRestart}>Start Over</button>
+                  </>
+                ) : (
+                  <>
+                    <div className="score-display">Score: {score} / {currentQuestionIndex}</div>
+                    <div className="question-stem">{currentQuestion.stem}</div>
+                    {currentQuestion.options.map((option, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleAnswerClick(index)}
+                        className={`option ${selectedAnswer === index ? 'selected' : ''}`}
+                        disabled={selectedAnswer !== null}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                    {feedbackMessage && (
+                      <div className={`feedback ${selectedAnswer === currentQuestion.correctIndex ? 'correct' : 'incorrect'}`}>
+                        <div className="feedback-title">{selectedAnswer === currentQuestion.correctIndex ? 'Correct!' : 'Incorrect.'}</div>
+                        {selectedAnswer !== currentQuestion.correctIndex && <div>{feedbackMessage}</div>}
+                      </div>
+                    )}
+                    {selectedAnswer !== null && (
+                      <button onClick={handleNextClick} className="next-button">
+                        {currentQuestionIndex + 1 < questions.length ? 'Next Question' : 'Complete Quiz'}
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          );
+        };
+
+        const rootElement = document.getElementById('root');
+        if (rootElement) {
+          const root = ReactDOM.createRoot(rootElement);
+          root.render(<App />);
+        } else {
+          console.error("Failed to find the root element with ID 'root'.");
+        }
+    </script>
+</body>
+</html>
